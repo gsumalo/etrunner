@@ -1,0 +1,5 @@
+if(WIN32)
+elseif(UNIX)
+    set(CMAKE_CXX_FLAGS_DEBUG "-g -gdwarf-4 -gstrict-dwarf -fno-omit-frame-pointer" CACHE STRING "Debug flags" FORCE)
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-DNDEBUG -O2 -g -gdwarf-4 -gstrict-dwarf -fno-omit-frame-pointer" CACHE STRING "RelWithDebInfo flags" FORCE)
+endif(WIN32)
