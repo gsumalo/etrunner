@@ -9,7 +9,17 @@
 
 namespace convenience {
 
-std::string read_file(const boost::filesystem::path & path);
+std::string read_file(
+        const boost::filesystem::path & path);
+
+template <typename Ch>
+boost::property_tree::detail::rapidxml::xml_attribute<Ch> *first_attribute(
+        const boost::property_tree::detail::rapidxml::xml_node<Ch> & node,
+        std::basic_string_view<Ch> name,
+        bool case_sensitive = true)
+{
+    return node.first_attribute(name.data(), name.size(), case_sensitive);
+}
 
 template <typename Ch>
 boost::property_tree::detail::rapidxml::xml_node<Ch> *first_node(

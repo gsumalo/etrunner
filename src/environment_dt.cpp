@@ -82,8 +82,8 @@ void EnvironmentDT::load_test_spec_(const boost::filesystem::path & test_spec_pa
 
         for (auto suite_node(convenience::first_node<char>(*tests_node, SUITE_LABEL)); suite_node != nullptr;
                 suite_node = convenience::next_sibling<char>(*suite_node, SUITE_LABEL)) {
-            auto suite_name_node(convenience::first_node<char>(*suite_node, NAME_LABEL));
-            auto suite_enabled_node(convenience::first_node<char>(*suite_node, ENABLED_LABEL));
+            auto suite_name_node(convenience::first_attribute<char>(*suite_node, NAME_LABEL));
+            auto suite_enabled_node(convenience::first_attribute<char>(*suite_node, ENABLED_LABEL));
 
             if ((suite_name_node != nullptr) && (suite_enabled_node != nullptr)) {
                 const std::string suite_name(suite_name_node->value());
@@ -118,10 +118,10 @@ void EnvironmentDT::load_test_spec_(const boost::filesystem::path & test_spec_pa
 
                 for (auto case_node(convenience::first_node<char>(*suite_node, CASE_LABEL)); case_node != nullptr;
                         case_node = convenience::next_sibling<char>(*case_node, CASE_LABEL)) {
-                    auto case_name_node(convenience::first_node<char>(*case_node, NAME_LABEL));
-                    auto case_enabled_node(convenience::first_node<char>(*case_node, ENABLED_LABEL));
+                    auto case_name_node(convenience::first_attribute<char>(*case_node, NAME_LABEL));
+                    auto case_enabled_node(convenience::first_attribute<char>(*case_node, ENABLED_LABEL));
                     auto case_path_node(convenience::first_node<char>(*case_node, PATH_LABEL));
-                    auto basetime_node(convenience::first_node<char>(*case_node, BASETIME_LABEL));
+                    auto basetime_node(convenience::first_attribute<char>(*case_node, BASETIME_LABEL));
 
                     if ((case_name_node != nullptr) && (case_path_node != nullptr) && (case_enabled_node != nullptr)
                             && (basetime_node != nullptr)) {
