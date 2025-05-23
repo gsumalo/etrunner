@@ -33,8 +33,8 @@ template <typename Factory>
     };
 
     return ::testing::internal::MakeAndRegisterTestInfo(test_suite_name, test_name, nullptr, nullptr,
-        ::testing::internal::CodeLocation(file, line), ::testing::internal::GetTypeId<TestT>(), setup, teardown,
-        new FactoryImpl{std::move(factory)});
+            ::testing::internal::CodeLocation(file, line), ::testing::internal::GetTypeId<TestT>(), setup, teardown,
+            new FactoryImpl{std::move(factory)});
 }
 
 class CaseWrapper: public ::testing::Test
@@ -55,7 +55,7 @@ public:
         if (m_body_) {
             ASSERT_NO_FATAL_FAILURE(m_body_());
         } else {
-            FAIL() << "Test body could not be evaluated";
+            GTEST_FAIL() << "Test body could not be evaluated";
         }
     }
 
@@ -100,14 +100,14 @@ void register_test(
             return new CaseWrapper(
                     std::bind(test_body, spec->get_plan(), maximum_concurrency, executable, case_properties),
                     std::bind(setup_body, spec->get_setup(), maximum_concurrency, executable, case_properties),
-                    std::bind(test_body, spec->get_teardown(), maximum_concurrency, executable, case_properties));
+                    std::bind(teardown_body, spec->get_teardown(), maximum_concurrency, executable, case_properties));
         });
     ::testing::internal::SetUpTestSuiteFunc setup([=]() {
             ASSERT_NO_FATAL_FAILURE(setup_body(spec->get_suite().get_setup(), maximum_concurrency, executable,
                     properties));
         });
     ::testing::internal::TearDownTestSuiteFunc teardown([=]() {
-            EXPECT_NO_FATAL_FAILURE(test_body(spec->get_suite().get_teardown(), maximum_concurrency, executable,
+            EXPECT_NO_FATAL_FAILURE(teardown_body(spec->get_suite().get_teardown(), maximum_concurrency, executable,
                     properties));
         });
 

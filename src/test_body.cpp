@@ -76,7 +76,8 @@ class TestCase: public testing::Test
 public:
     TestCase(
             const plan_t & plan,
-            const boost::filesystem::path & executable);
+            const boost::filesystem::path & executable,
+            bool check_fatal_errors);
 
     void TestBody() override;
 
@@ -95,20 +96,21 @@ private:
 
     const plan_t m_plan_;
     const boost::filesystem::path m_executable_;
+    bool m_check_fatal_errors_ = true;
     mutable std::mutex m_placeholders_guard_;
     placeholders_t m_placeholders_;
-    int m_concurrency_;
-    std::atomic<bool> m_no_fatal_error_;
+    int m_concurrency_ = tbb::task_arena::automatic;
+    std::atomic<bool> m_no_fatal_error_ = true;
     placeholders_t m_new_properties_;
 };
 
 TestCase::TestCase(
         const plan_t & plan,
-        const boost::filesystem::path & executable)
+        const boost::filesystem::path & executable,
+        bool check_fatal_errors)
     : m_plan_(plan)
     , m_executable_(executable)
-    , m_concurrency_(tbb::task_arena::automatic)
-    , m_no_fatal_error_(true)
+    , m_check_fatal_errors_(check_fatal_errors)
 {
 }
 
@@ -212,7 +214,7 @@ void TestCase::TestBody()
 
             // Addition of nodes and edges to the task graph
             auto task_node(std::make_shared<task_node_t>(executor, [&, test_node](const tbb::flow::continue_msg &) {
-                    if (m_no_fatal_error_) {
+                    if (m_no_fatal_error_ || !m_check_fatal_errors_) {
                         try {
                             test_node->m_placeholders = get_placeholders();
                             run_(*test_node);
@@ -222,7 +224,7 @@ void TestCase::TestBody()
                             }
                         } catch (...) {
                             m_no_fatal_error_ = false;
-                            FAIL();
+                            GTEST_FAIL();
                         }
                     }
                 }));
@@ -393,8 +395,13 @@ std::string TestNode::run(
 {
     std::string response, error_text;
 
-    EXPECT_EQ(EXIT_SUCCESS, convenience::run_process(executable, m_args, request, response, error_text)) << error_text
-            << (response.empty() ? "\n" : "\nwith response:\n" + response + "\n");
+    decltype(m_args) final_args;
+    for (const auto & arg: m_args) {
+        final_args.emplace_back(apply_placeholders(arg, m_placeholders));
+    }
+
+    EXPECT_EQ(EXIT_SUCCESS, convenience::run_process(executable, final_args, request, response, error_text))
+            << error_text << (response.empty() ? "\n" : "\nwith response:\n" + response + "\n");
 
     return response;
 }
@@ -405,7 +412,7 @@ void setup_body(
         const boost::filesystem::path & executable,
         std::shared_ptr<placeholders_t> properties)
 {
-    TestCase test_case(plan, executable);
+    TestCase test_case(plan, executable, true);
     test_case.add_as_placeholders(*properties);
     test_case.set_concurrency(maximum_concurrency);
     test_case.TestBody();
@@ -418,13 +425,25 @@ void setup_body(
     }
 }
 
+void teardown_body(
+        const plan_t & plan,
+        uint64_t maximum_concurrency,
+        const boost::filesystem::path & executable,
+        std::shared_ptr<placeholders_t> properties)
+{
+    TestCase test_case(plan, executable, false);
+    test_case.add_as_placeholders(*properties);
+    test_case.set_concurrency(maximum_concurrency);
+    test_case.TestBody();
+}
+
 void test_body(
         const plan_t & plan,
         uint64_t maximum_concurrency,
         const boost::filesystem::path & executable,
         std::shared_ptr<placeholders_t> properties)
 {
-    TestCase test_case(plan, executable);
+    TestCase test_case(plan, executable, true);
     test_case.add_as_placeholders(*properties);
     test_case.set_concurrency(maximum_concurrency);
     test_case.TestBody();

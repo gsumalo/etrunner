@@ -18,6 +18,12 @@ void setup_body(
         const boost::filesystem::path & executable, 
         std::shared_ptr<placeholders_t> properties);
 
+void teardown_body(
+        const plan_t & plan,
+        uint64_t maximum_concurrency,
+        const boost::filesystem::path & executable, 
+        std::shared_ptr<placeholders_t> properties);
+
 void test_body(
         const plan_t & plan,
         uint64_t maximum_concurrency,
